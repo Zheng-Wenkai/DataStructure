@@ -219,29 +219,31 @@ void Insert(Tree &T, int val)    //插入结点
     }
 }
 
-Node* Successor(Tree &T, Node *x)   //寻找结点x的中序后继
+Node* Successor(Tree &T, Node *x)   // 寻找结点x的中序后继q
 {
-    if( x->right != nil )         //如果x的右子树不为空，那么为右子树中最左边的结点
+    if( x->right != nil )         //如果x的右子树不为空，那么后继结点为右子树中最左边的结点
     {
-        Node *q=nil;
-        Node *p=x->right; // p是当前结点，q是父结点
+        Node *q=x->right;
+        Node *p=q;
         while( p->left != nil )
         {
-            q=p;
+            q=p;// q是当前结点，p用来寻找左孩子
             p=p->left;
         }
         return q;
     }
-    else                       //如果x的右子树为空，那么x的后继为x的所有祖先中为左子树的祖先
+    else //此处永远不会生效，因为需要左右子树都不为空，才能进入此else
     {
-        Node *y=x->parent;
-        while(  y != nil && x == y->right ) // 如果x是右孩子（x是改侧中最大的一个），则需一直向上查询，直到改侧分支的左孩子都被遍历，画图可更直观了解
+        Node *q=x->parent;  // 如果x的右子树为空，且x是x的父亲的左孩子，那么x的后继结点即为x的父亲
+        while(  q != nil && x == q->right )
+        // 如果x的右子树为空，且x是x的父亲的右孩子（右孩子即为该侧最大的结点），
+        // 则需一直向上查询，直到属于x最大的一侧结束，然后找到的该侧的父结点即为x的后继结点。
         {
-            x=y;
-            y=y->parent;
+            x=q;
+            q=q->parent;
         }
 
-        return y;
+        return q;
     }
 }
 
@@ -324,14 +326,17 @@ void Delete(Tree &T, Node *z)     //在红黑树T中删除结点z
     Node *x;    //x指向将要被删除的结点的唯一儿子
     if( z->left == nil || z->right == nil )    //如果z有一个子树为空的话，那么将直接删除z,即y指向z
     {
-        y=z;
+        y=z;// 这里的y不一定是后继结点，对下面的第一对if_else均可能生效。
     }
     else
     {
-        y=Successor(T, z);     //如果z的左右子树皆不为空的话，则寻找z的中序后继y，
-    }                          //用其值代替z的值，然后将y删除 ( 注意: y肯定是没有左子树的 )
+        y=Successor(T, z);
+        //如果z的左右子树皆不为空的话，则寻找z的中序后继y，
+        //用其值代替z的值，然后将后继结点y删除 ( 注意: 后继结点y肯定是没有左子树的 )
+        //对下面的第一对if_else,仅有else可能生效
+    }
 
-    if( y->left != nil )         //如果y的左子树不为空，则x指向y的左子树
+    if( y->left != nil )         //y即将被删除，故y的孩子要和y的父亲建立关系、
     {
         x=y->left;
     }
@@ -339,6 +344,7 @@ void Delete(Tree &T, Node *z)     //在红黑树T中删除结点z
     {
         x=y->right;
     }
+
     x->parent=y->parent;    //将原来y的父母设为x的父母，y即将被删除
     if( y->parent == nil )  //如果y的父亲为空，那么x成为新的根节点
     {
@@ -363,6 +369,7 @@ void Delete(Tree &T, Node *z)     //在红黑树T中删除结点z
     {
         DeleteFixup(T, x);
     }
+    free(y);
 }
 Node* Search(Tree T, int val)
 {
@@ -378,9 +385,12 @@ Node* Search(Tree T, int val)
         }
         else
         {
+            printf("Search %d\n",val);
             return T;
         }
     }
+    else
+        printf("Can't search %d\n",val);
 }
 
 void MidTranverse(Tree T) // 中序遍历
@@ -396,22 +406,21 @@ void MidTranverse(Tree T) // 中序遍历
 int main()
 {
     Tree t=NULL;
-    Insert(t,10);
-    Insert(t,85);
+    Insert(t,13);
+    Insert(t,8);
+    Insert(t,17);
+    Insert(t,1);
+    Insert(t,11);
     Insert(t,15);
-    Insert(t,70);
-    Insert(t,20);
-    Insert(t,60);
-    Insert(t,30);
-    Insert(t,50);
-    Insert(t,65);
-    Insert(t,80);
-    Insert(t,90);
-    Insert(t,40);
-    Insert(t,5);
-    Insert(t,55);
-    Delete(t,Search(t,30));
-    Delete(t,Search(t,65));
+    Insert(t,25);
+    Insert(t,6);
+    Insert(t,22);
+    Insert(t,27);
     MidTranverse(t);
+    printf("\n");
+    Delete(t,Search(t,25));
+    MidTranverse(t);
+    printf("\n");
+    Search(t,25);
     return 0;
 }
